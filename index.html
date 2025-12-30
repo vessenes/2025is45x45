@@ -48,10 +48,16 @@
         .topbar-content {
             display: flex;
             align-items: center;
-            gap: 18px;
-            flex-wrap: wrap;
+            gap: 12px;
+            flex-wrap: nowrap;
             justify-content: space-between;
-            padding: 14px 18px;
+            padding: 10px 18px;
+        }
+
+        @media (max-width: 768px) {
+            .shortcuts {
+                display: none;
+            }
         }
 
         .title {
@@ -60,17 +66,14 @@
             letter-spacing: 0.2px;
         }
 
-        .subtitle {
-            color: var(--muted);
-            font-size: clamp(12px, 1.4vw, 14px);
-        }
-
-        .fork-notice {
+        .page-footer {
+            text-align: center;
+            padding: 12px 18px;
             color: var(--muted);
             font-size: clamp(10px, 1.2vw, 12px);
         }
 
-        .fork-notice a {
+        .page-footer a {
             color: var(--accent-2);
         }
 
@@ -219,6 +222,40 @@
         button.bigbut.selected {
             outline: 2px solid var(--accent);
             box-shadow: 0 0 0 3px rgba(228, 93, 59, 0.25);
+            animation: selectedWiggle 0.8s ease-in-out infinite;
+        }
+
+        #pin-zone {
+            position: sticky;
+            top: 0;
+            left: 0;
+            z-index: 500;
+            background: rgba(246, 241, 231, 0.95);
+            backdrop-filter: blur(4px);
+            padding: 8px 14px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        #pin-zone:not(:empty) {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #pin-zone .pin-label {
+            font-size: 12px;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        #pin-zone button.bigbut {
+            min-width: 140px;
+            max-width: 220px;
+        }
+
+        .pinned-original {
+            opacity: 0.3;
         }
 
         button.bigbut:disabled {
@@ -506,16 +543,61 @@
             40% { transform: scale(1.02); box-shadow: 0 0 18px rgba(31, 122, 115, 0.35); }
             100% { transform: scale(1); box-shadow: 0 0 0 rgba(31, 122, 115, 0); }
         }
+
+        @keyframes selectedWiggle {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-1.5deg); }
+            75% { transform: rotate(1.5deg); }
+        }
+
+        @keyframes matchBurst {
+            0% { transform: scale(1); box-shadow: 0 0 0 rgba(31, 122, 115, 0); }
+            30% { transform: scale(1.12) rotate(-2deg); box-shadow: 0 0 20px rgba(31, 122, 115, 0.5); }
+            60% { transform: scale(1.05) rotate(1deg); box-shadow: 0 0 30px rgba(31, 122, 115, 0.3); }
+            100% { transform: scale(1) rotate(0); box-shadow: 0 0 0 rgba(31, 122, 115, 0); }
+        }
+
+        @keyframes goldPulse {
+            0%, 100% { box-shadow: 0 0 8px rgba(255, 193, 7, 0.4); }
+            50% { box-shadow: 0 0 20px rgba(255, 193, 7, 0.7); }
+        }
+
+        /* Match burst animation */
+        button.bigbut.match-burst {
+            animation: matchBurst 0.5s ease-out;
+        }
+
+        /* Progress glow - intensifies as cluster grows */
+        button.bigbut.glow-mild {
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08), 0 0 8px rgba(255, 193, 7, 0.3);
+        }
+        button.bigbut.glow-medium {
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08), 0 0 12px rgba(255, 193, 7, 0.5);
+            border-color: rgba(255, 193, 7, 0.4);
+        }
+        button.bigbut.glow-strong {
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08), 0 0 18px rgba(255, 193, 7, 0.7);
+            border-color: rgba(255, 193, 7, 0.6);
+            background: linear-gradient(135deg, #fffef5 0%, #fff9e6 100%);
+        }
+        button.bigbut.glow-intense {
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08), 0 0 25px rgba(255, 193, 7, 0.85);
+            border-color: rgba(255, 193, 7, 0.8);
+            background: linear-gradient(135deg, #fffdf0 0%, #fff4cc 100%);
+            animation: goldPulse 1.5s ease-in-out infinite;
+        }
     </style>
     <body>
         <canvas id="fireworks"></canvas>
 <div id="app">
     <header class="topbar">
         <div class="topbar-content">
-            <div>
-                <div class="title">Make 45 groups of 45!</div>
-                <div class="subtitle">Combine two to build a set. Add more until you've got 45 sets</div>
-                <div class="fork-notice">Forked from <a href="https://thomaswc.com/2025.html">thomaswc.com/2025.html</a>. All modifications &copy; 2025 Peter Vessenes, <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener">CC0 1.0</a>.</div>
+            <div class="title">Make 45 groups of 45!</div>
+            <div class="shortcuts">
+                <span class="shortcut-key"><span class="keycap">R</span> Hold to reset</span>
+                <span class="shortcut-key"><span class="keycap">S</span> Shuffle</span>
+                <span class="shortcut-key"><span class="keycap">/</span> Search</span>
+                <span class="shortcut-key"><span class="keycap">Esc</span> Clear search</span>
             </div>
             <div id="status">
                 <span class="stat">Score: <span id="score">0</span></span>
@@ -523,20 +605,18 @@
                 <label class="sr-only" for="filter-input">Filter words</label>
                 <input id="filter-input" type="search" placeholder="Type / to search" autocomplete="off" />
             </div>
-            <div class="shortcuts">
-                <span class="shortcut-key"><span class="keycap">R</span> Hold to reset</span>
-                <span class="shortcut-key"><span class="keycap">S</span> Shuffle</span>
-                <span class="shortcut-key"><span class="keycap">/</span> Search</span>
-                <span class="shortcut-key"><span class="keycap">Esc</span> Clear search</span>
-            </div>
         </div>
     </header>
     <div class="layout">
         <div id="board-wrapper">
+            <div id="pin-zone"></div>
             <div id="priority-lane"></div>
             <div id="board"></div>
         </div>
     </div>
+    <footer class="page-footer">
+        Forked from <a href="https://thomaswc.com/2025.html">thomaswc.com/2025.html</a>. All modifications &copy; 2025 Peter Vessenes, <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener">CC0 1.0</a>. Fork me at <a href="https://github.com/vessenes/2025is45x45">github.com</a>
+    </footer>
 </div>
 <div id="reset-indicator">
     <span id="reset-label">Hold R to reset</span>
@@ -711,11 +791,47 @@
        
             // Functions
             
+            function clearPinZone() {
+              const pinZone = document.getElementById("pin-zone");
+              pinZone.innerHTML = "";
+              // Remove dimming from any pinned originals
+              document.querySelectorAll(".pinned-original").forEach(el => {
+                el.classList.remove("pinned-original");
+              });
+            }
+
             function deselect() {
               if (selected != 0) {
                 selected.classList.remove("selected");
+                clearPinZone();
                 selected = 0;
               }
+            }
+
+            function pinSelected(button) {
+              const pinZone = document.getElementById("pin-zone");
+              clearPinZone();
+
+              // Create a visual clone for the pin zone
+              const clone = button.cloneNode(true);
+              clone.classList.add("selected");
+              clone.classList.remove("pinned-original");
+
+              // Clone click delegates to original
+              clone.onclick = (e) => {
+                e.stopPropagation();
+                button.click();
+              };
+
+              // Add label and clone to pin zone
+              const label = document.createElement("span");
+              label.className = "pin-label";
+              label.textContent = "Selected:";
+              pinZone.appendChild(label);
+              pinZone.appendChild(clone);
+
+              // Dim the original
+              button.classList.add("pinned-original");
             }
 
             function wireButton(button) {
@@ -747,40 +863,46 @@
                     return;
                   }
                   button.classList.add("selected");
-                  
+
                   if (selected == 0) {
                       selected = button;
+                      pinSelected(button);
                       return;
                   }
 
                   if (button.category == selected.category) {
-                    
+
                     firstbut = button;
                     secondbut = selected;
-                    
-                    // Deselect
+
+                    // Deselect and clear pin zone
+                    clearPinZone();
                     selected.classList.remove("selected");
                     button.classList.remove("selected");
                     selected = 0;
                     didMatch = performMatch(firstbut, secondbut);
-                    
+
                   } else {
                     mistakes = mistakes + 1;
                     document.getElementById("mistakes").textContent = mistakes;
                     bumpStat("mistakes");
-                    // Shake it
+
+                    // Immediately deselect and clear pin zone
+                    clearPinZone();
+                    selected.classList.remove("selected");
+                    button.classList.remove("selected");
+
+                    // Shake both
                     button.classList.add('shake');
                     selected.classList.add('shake');
-                    
+
                     button.addEventListener('animationend', () => {
                       button.classList.remove('shake');
-                      button.classList.remove("selected");
                     }, { once: true });
- 
+
                     old_selected = selected;
                     old_selected.addEventListener('animationend', () => {
                       old_selected.classList.remove('shake');
-                      old_selected.classList.remove("selected");
                     }, { once: true });
 
                     selected = 0;
@@ -812,18 +934,35 @@
               }
             }
 
+            function updateGlowClass(button) {
+              const cluster = button.cluster || [];
+              const len = cluster.length;
+              button.classList.remove("glow-mild", "glow-medium", "glow-strong", "glow-intense");
+              if (len >= 35) {
+                button.classList.add("glow-intense");
+              } else if (len >= 25) {
+                button.classList.add("glow-strong");
+              } else if (len >= 15) {
+                button.classList.add("glow-medium");
+              } else if (len >= 5) {
+                button.classList.add("glow-mild");
+              }
+            }
+
             function setButtonLabel(button) {
               const cluster = button.cluster || [];
               if (cluster.length <= 1) {
                 button.textContent = cluster[0] || "";
                 button.title = "";
                 updateButtonSearch(button);
+                updateGlowClass(button);
                 return;
               }
               const summary = buildClusterSummary(cluster);
               const full = cluster.join(", ");
               button.innerHTML = `<div class="cluster-summary">${summary}</div><div class="cluster-full">${full}</div>`;
               updateButtonSearch(button);
+              updateGlowClass(button);
             }
 
             function moveClusterToPriority(button) {
@@ -954,17 +1093,17 @@
               score = score + 1;
               firstbut.cluster = firstbut.cluster.concat(secondbut.cluster);
               setButtonLabel(firstbut);
-              firstbut.classList.add("juice-pop");
+              firstbut.classList.add("match-burst");
               firstbut.addEventListener("animationend", () => {
-                firstbut.classList.remove("juice-pop");
+                firstbut.classList.remove("match-burst");
               }, { once: true });
-                    if (firstbut.cluster.length == 45) {
-                        finishCategory(firstbut);
-                    } else {
-                        moveClusterToPriority(firstbut);
-                        clearSearch();
-                        applyFilter();
-                    }
+              if (firstbut.cluster.length == 45) {
+                finishCategory(firstbut);
+              } else {
+                moveClusterToPriority(firstbut);
+                clearSearch();
+                applyFilter();
+              }
               document.getElementById("score").textContent = score;
               bumpStat("score");
               removeButton(secondbut);
@@ -1012,6 +1151,7 @@
               score = 0;
               mistakes = 0;
               selected = 0;
+              clearPinZone();
               document.getElementById("score").textContent = score;
               document.getElementById("mistakes").textContent = mistakes;
               const input = document.getElementById("filter-input");
@@ -1439,6 +1579,7 @@
             applyFilter();
             document.addEventListener("keydown", (event) => {
               if (event.key === "Escape") {
+                deselect();
                 const input = document.getElementById("filter-input");
                 input.value = "";
                 input.blur();
