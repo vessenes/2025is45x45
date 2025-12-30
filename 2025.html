@@ -3,38 +3,441 @@
     <!-- Original at https://thomaswc.com/2025.html -->
     <title>2025</title>
     <style>
+        :root {
+            --bg: #f6f1e7;
+            --bg-accent: #dfe9e8;
+            --ink: #1b1b1b;
+            --muted: #5c5c5c;
+            --accent: #e45d3b;
+            --accent-2: #1f7a73;
+            --card: #ffffff;
+            --shadow: rgba(15, 23, 42, 0.12);
+            --gap: 6px;
+            --radius: 14px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-  background-color: white; /* Or #fff or #ffffff */
-}
+            margin: 0;
+            color: var(--ink);
+            font-family: "Avenir Next", "Gill Sans", "Optima", "Trebuchet MS", sans-serif;
+            background:
+                radial-gradient(1200px 800px at 10% 0%, #fcead0 0%, transparent 60%),
+                radial-gradient(900px 600px at 100% 0%, #d9efe8 0%, transparent 55%),
+                var(--bg);
+        }
 
-.bigbut {
-width:100%; height:100%; display:block;
-}
+        #app {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
 
-.shake {
-  animation: shake 0.5s;
-  animation-iteration-count: 1;
-}
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(246, 241, 231, 0.9);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            backdrop-filter: blur(8px);
+        }
 
-.numCirc {
-    border-radius: 70%;
-    background: white; /* #fff; */
-    border: 2px solid red; /* #666; */
-    color: red; /* #666; */
-    text-align: center;
-}
+        .topbar-content {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            padding: 14px 18px;
+        }
 
-.red {
-  color: red;
-}
+        .title {
+            font-size: clamp(16px, 2vw, 22px);
+            font-weight: 700;
+            letter-spacing: 0.2px;
+        }
 
-.floating {
-    position: fixed;
-    z-index: 999;
-    background-color: lightblue;
-}
+        .subtitle {
+            color: var(--muted);
+            font-size: clamp(12px, 1.4vw, 14px);
+        }
 
-#fireworks {
+        .fork-notice {
+            color: var(--muted);
+            font-size: clamp(10px, 1.2vw, 12px);
+        }
+
+        .fork-notice a {
+            color: var(--accent-2);
+        }
+
+        #status {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            font-size: clamp(12px, 1.6vw, 16px);
+        }
+
+        .stat {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+        }
+
+        #deselect {
+            border: none;
+            background: var(--accent);
+            color: #fff;
+            padding: 8px 14px;
+            border-radius: 999px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        #deselect:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #filter-input {
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            border-radius: 999px;
+            padding: 8px 14px;
+            min-width: min(260px, 70vw);
+            font-size: clamp(12px, 1.6vw, 16px);
+            background: #fff;
+        }
+
+        .layout {
+            display: block;
+            padding: 16px 18px 22px;
+        }
+
+        #board-wrapper {
+            flex: 1 1 auto;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: var(--radius);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 10px 30px var(--shadow);
+            overflow: auto;
+            max-height: calc(100vh - 140px);
+        }
+
+        #board-wrapper.shuffle-flash {
+            animation: shuffleFlash 0.6s ease;
+        }
+
+        #board {
+            padding: 14px;
+        }
+
+        #priority-lane {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 220px));
+            gap: 12px;
+            margin: 14px;
+            justify-content: start;
+            position: relative;
+            z-index: 2;
+        }
+
+        .cluster-item {
+            width: 100%;
+            animation: dropIn 0.35s ease;
+            transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+            position: relative;
+            z-index: 1;
+        }
+
+        .cluster-item:has(.expanded),
+        .cluster-item.expanded {
+            z-index: 1000;
+        }
+
+        .cluster-item .bigbut {
+            width: 100%;
+        }
+
+        .cluster-item.recent {
+            animation: recentPulse 0.8s ease;
+            box-shadow: 0 0 18px rgba(31, 122, 115, 0.35);
+            border-radius: 12px;
+        }
+
+        table#the_table {
+            border-collapse: separate;
+            border-spacing: var(--gap);
+        }
+
+        td.tile-cell {
+            vertical-align: top;
+            position: relative;
+            z-index: 1;
+        }
+
+        td.tile-cell:has(.expanded),
+        td.tile-cell.expanded {
+            z-index: 1000;
+        }
+
+        button.bigbut {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            width: 100%;
+            min-width: clamp(90px, 8vw, 140px);
+            min-height: clamp(56px, 6vw, 90px);
+            max-height: 90px;
+            padding: 8px 10px;
+            font-size: clamp(11px, 1.4vw, 16px);
+            font-weight: 600;
+            text-align: center;
+            color: var(--ink);
+            background: var(--card);
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+            position: relative;
+            overflow: visible;
+            z-index: 2;
+        }
+
+        button.bigbut:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+        }
+
+        button.bigbut.selected {
+            outline: 2px solid var(--accent);
+            box-shadow: 0 0 0 3px rgba(228, 93, 59, 0.25);
+        }
+
+        button.bigbut:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        button.bigbut.completed {
+            opacity: 0.9;
+            cursor: default;
+        }
+
+        button.bigbut.juice-pop {
+            animation: juicePop 0.35s ease;
+        }
+
+        .cluster-summary {
+            font-weight: 700;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .cluster-count {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .cluster-full {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-height 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
+            font-size: clamp(10px, 1.2vw, 13px);
+            color: var(--muted);
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: calc(100% + 6px);
+            background: #fff;
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            border-radius: 10px;
+            padding: 8px 10px;
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+            transform: translateY(-6px);
+            z-index: 10;
+        }
+
+        button.bigbut.expanded {
+            z-index: 100;
+        }
+
+        button.bigbut.expanded .cluster-full {
+            max-height: 180px;
+            opacity: 1;
+            transform: translateY(0);
+            overflow: auto;
+        }
+
+        .matched-card {
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            padding: 10px 12px;
+            background: var(--card);
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .matched-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            background: none;
+            border: none;
+            padding: 0;
+            text-align: left;
+            cursor: pointer;
+            font-size: clamp(13px, 1.6vw, 16px);
+        }
+
+        .matched-count {
+            color: var(--accent-2);
+            font-weight: 700;
+        }
+
+        .matched-words {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-height 0.35s ease, opacity 0.35s ease;
+            font-size: clamp(11px, 1.4vw, 14px);
+            color: var(--muted);
+        }
+
+        .matched-card.expanded .matched-words {
+            max-height: 520px;
+            opacity: 1;
+        }
+
+        .shake {
+            animation: shake 0.5s;
+            animation-iteration-count: 1;
+        }
+
+        .red {
+            color: var(--accent);
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        .is-hidden {
+            display: none;
+        }
+
+        .shortcuts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: flex-start;
+            font-size: clamp(11px, 1.3vw, 14px);
+            color: var(--muted);
+        }
+
+        .shortcut-key {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            font-weight: 600;
+        }
+
+        .keycap {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 22px;
+            padding: 2px 6px;
+            border-radius: 6px;
+            background: #1b1b1b;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        #reset-indicator {
+            position: fixed;
+            left: 50%;
+            bottom: 24px;
+            transform: translateX(-50%) translateY(10px);
+            background: rgba(27, 27, 27, 0.92);
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            z-index: 2000;
+        }
+
+        #reset-indicator.active {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        #reset-indicator.done {
+            animation: resetPulse 0.6s ease;
+        }
+
+        .reset-bar {
+            width: 120px;
+            height: 6px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .reset-bar::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #ffb347, #ff5f6d);
+            border-radius: inherit;
+        }
+
+        #reset-indicator.holding .reset-bar::after {
+            animation: holdFill 1s linear forwards;
+        }
+
+        .score-pop {
+            animation: scorePop 0.3s ease;
+        }
+
+        #fireworks {
             position: fixed;
             top: 0;
             left: 0;
@@ -44,28 +447,101 @@ width:100%; height:100%; display:block;
             z-index: 10000;
         }
 
-@keyframes shake {
-  0% { transform: translateX(1px) rotate(0deg); }
-  10% { transform: translateX(-1px) rotate(-1deg); }
-  20% { transform: translateX(-3px) rotate(1deg); }
-  30% { transform: translateX(3px) rotate(0deg); }
-  40% { transform: translateX(1px) rotate(1deg); }
-  50% { transform: translateX(-1px) rotate(-1deg); }
-  60% { transform: translateX(-3px) rotate(0deg); }
-  70% { transform: translateX(3px) rotate(-1deg); }
-  80% { transform: translateX(-1px) rotate(1deg); }
-  90% { transform: translateX(1px) rotate(0deg); }
-  100% { transform: translateX(1px) rotate(-1deg); }
-}
+        @media (max-width: 980px) {
+            #board-wrapper {
+                max-height: none;
+            }
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(1px) rotate(0deg); }
+            10% { transform: translateX(-1px) rotate(-1deg); }
+            20% { transform: translateX(-3px) rotate(1deg); }
+            30% { transform: translateX(3px) rotate(0deg); }
+            40% { transform: translateX(1px) rotate(1deg); }
+            50% { transform: translateX(-1px) rotate(-1deg); }
+            60% { transform: translateX(-3px) rotate(0deg); }
+            70% { transform: translateX(3px) rotate(-1deg); }
+            80% { transform: translateX(-1px) rotate(1deg); }
+            90% { transform: translateX(1px) rotate(0deg); }
+            100% { transform: translateX(1px) rotate(-1deg); }
+        }
+
+        @keyframes dropIn {
+            from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @keyframes juicePop {
+            0% { transform: scale(1); }
+            45% { transform: scale(1.08) rotate(-1deg); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes scorePop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes holdFill {
+            from { width: 0%; }
+            to { width: 100%; }
+        }
+
+        @keyframes resetPulse {
+            0% { transform: translateX(-50%) scale(1); }
+            40% { transform: translateX(-50%) scale(1.06); }
+            100% { transform: translateX(-50%) scale(1); }
+        }
+
+        @keyframes shuffleFlash {
+            0% { box-shadow: 0 0 0 rgba(228, 93, 59, 0); }
+            40% { box-shadow: 0 0 24px rgba(228, 93, 59, 0.35); }
+            100% { box-shadow: 0 0 0 rgba(228, 93, 59, 0); }
+        }
+
+        @keyframes recentPulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 rgba(31, 122, 115, 0); }
+            40% { transform: scale(1.02); box-shadow: 0 0 18px rgba(31, 122, 115, 0.35); }
+            100% { transform: scale(1); box-shadow: 0 0 0 rgba(31, 122, 115, 0); }
+        }
     </style>
     <body>
         <canvas id="fireworks"></canvas>
-<div class="floating">
-   Make 45 groups of 45!  (By combining two at a time.) &nbsp;
-   Score: <span id="score">0</span> &nbsp; Mistakes: <span id="mistakes">0</span> &nbsp;
-    <button type="button" id="deselect" style="" disabled onclick="deselect()">Deselect</button>
+<div id="app">
+    <header class="topbar">
+        <div class="topbar-content">
+            <div>
+                <div class="title">Make 45 groups of 45!</div>
+                <div class="subtitle">Combine two to build a set. Add more until you've got 45 sets</div>
+                <div class="fork-notice">Forked from <a href="https://thomaswc.com/2025.html">thomaswc.com/2025.html</a>. All modifications &copy; 2025 Peter Vessenes, <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener">CC0 1.0</a>.</div>
+            </div>
+            <div id="status">
+                <span class="stat">Score: <span id="score">0</span></span>
+                <span class="stat">Mistakes: <span id="mistakes">0</span></span>
+                <label class="sr-only" for="filter-input">Filter words</label>
+                <input id="filter-input" type="search" placeholder="Type / to search" autocomplete="off" />
+            </div>
+            <div class="shortcuts">
+                <span class="shortcut-key"><span class="keycap">R</span> Hold to reset</span>
+                <span class="shortcut-key"><span class="keycap">S</span> Shuffle</span>
+                <span class="shortcut-key"><span class="keycap">/</span> Search</span>
+                <span class="shortcut-key"><span class="keycap">Esc</span> Clear search</span>
+            </div>
+        </div>
+    </header>
+    <div class="layout">
+        <div id="board-wrapper">
+            <div id="priority-lane"></div>
+            <div id="board"></div>
+        </div>
+    </div>
 </div>
-<div style="padding-top: 16px; position: absolute" id="board"></div>
+<div id="reset-indicator">
+    <span id="reset-label">Hold R to reset</span>
+    <div class="reset-bar"></div>
+</div>
 
     </body>
         <script>
@@ -83,7 +559,8 @@ width:100%; height:100%; display:block;
         var selected = 0;  // The currently selected button, if any.
         
         var wordlist = [];  // Actually, a list of (word, category) pairs
-    
+        var resetHoldTimer = null;
+
 
         // The categories.
         
@@ -236,10 +713,359 @@ width:100%; height:100%; display:block;
             
             function deselect() {
               if (selected != 0) {
-                selected.style = "";
+                selected.classList.remove("selected");
                 selected = 0;
-                document.getElementById("deselect").disabled = true;
               }
+            }
+
+            function wireButton(button) {
+              button.addEventListener("mouseenter", () => {
+                if (!button.cluster || button.cluster.length <= 1) {
+                  return;
+                }
+                if (button.hoverTimer) {
+                  clearTimeout(button.hoverTimer);
+                }
+                button.hoverTimer = setTimeout(() => {
+                  button.classList.add("expanded");
+                  const wrapper = button.closest(".cluster-item") || button.closest("td.tile-cell");
+                  if (wrapper) wrapper.classList.add("expanded");
+                }, 150);
+              });
+              button.addEventListener("mouseleave", () => {
+                if (button.hoverTimer) {
+                  clearTimeout(button.hoverTimer);
+                }
+                button.classList.remove("expanded");
+                const wrapper = button.closest(".cluster-item") || button.closest("td.tile-cell");
+                if (wrapper) wrapper.classList.remove("expanded");
+              });
+              button.onclick = function() {
+                  let didMatch = false;
+                  if (selected == button) {
+                    deselect();
+                    return;
+                  }
+                  button.classList.add("selected");
+                  
+                  if (selected == 0) {
+                      selected = button;
+                      return;
+                  }
+
+                  if (button.category == selected.category) {
+                    
+                    firstbut = button;
+                    secondbut = selected;
+                    
+                    // Deselect
+                    selected.classList.remove("selected");
+                    button.classList.remove("selected");
+                    selected = 0;
+                    didMatch = performMatch(firstbut, secondbut);
+                    
+                  } else {
+                    mistakes = mistakes + 1;
+                    document.getElementById("mistakes").textContent = mistakes;
+                    bumpStat("mistakes");
+                    // Shake it
+                    button.classList.add('shake');
+                    selected.classList.add('shake');
+                    
+                    button.addEventListener('animationend', () => {
+                      button.classList.remove('shake');
+                      button.classList.remove("selected");
+                    }, { once: true });
+ 
+                    old_selected = selected;
+                    old_selected.addEventListener('animationend', () => {
+                      old_selected.classList.remove('shake');
+                      old_selected.classList.remove("selected");
+                    }, { once: true });
+
+                    selected = 0;
+                  }
+                  if (!didMatch) {
+                    saveState();
+                  }
+                  if (score == 1980) {
+                      window.alert("You win!!");
+                      startFireworks();
+                  }
+              };
+            }
+
+            function buildClusterSummary(cluster) {
+              if (cluster.length == 2) {
+                return `${cluster[0]}; ${cluster[1]}`;
+              }
+              return `${cluster[0]}, ${cluster[1]}, ... <span class="cluster-count">[${cluster.length}]</span>`;
+            }
+
+            function updateButtonSearch(button) {
+              const cluster = button.cluster || [];
+              const text = [button.category || "", ...cluster].join(" ").toLowerCase();
+              button.dataset.search = text;
+              const wrapper = button.closest(".cluster-item");
+              if (wrapper) {
+                wrapper.dataset.search = text;
+              }
+            }
+
+            function setButtonLabel(button) {
+              const cluster = button.cluster || [];
+              if (cluster.length <= 1) {
+                button.textContent = cluster[0] || "";
+                button.title = "";
+                updateButtonSearch(button);
+                return;
+              }
+              const summary = buildClusterSummary(cluster);
+              const full = cluster.join(", ");
+              button.innerHTML = `<div class="cluster-summary">${summary}</div><div class="cluster-full">${full}</div>`;
+              updateButtonSearch(button);
+            }
+
+            function moveClusterToPriority(button) {
+              if (!button || !button.cluster || button.cluster.length < 2) {
+                return;
+              }
+              const list = document.getElementById("priority-lane");
+              if (!list) {
+                return;
+              }
+              let wrapper = button.closest(".cluster-item");
+              if (!wrapper) {
+                wrapper = document.createElement("div");
+                wrapper.className = "cluster-item";
+                wrapper.appendChild(button);
+                list.appendChild(wrapper);
+                const td = button.closest("td");
+                if (td) {
+                  td.remove();
+                }
+              }
+              list.querySelectorAll(".cluster-item.recent").forEach(item => {
+                item.classList.remove("recent");
+              });
+              wrapper.classList.add("recent");
+              wrapper.scrollIntoView({ behavior: "smooth", block: "nearest" });
+              sortPriorityLane();
+              updateButtonSearch(button);
+            }
+
+            function removeButton(button) {
+              if (!button) {
+                return;
+              }
+              const wrapper = button.closest(".cluster-item");
+              if (wrapper) {
+                wrapper.remove();
+                return;
+              }
+              const td = button.closest("td");
+              if (td) {
+                td.remove();
+              }
+            }
+
+            function createClusterButton(category, cluster) {
+              const button = document.createElement("button");
+              button.className = "bigbut";
+              button.category = category;
+              button.cluster = cluster;
+              setButtonLabel(button);
+              wireButton(button);
+              return button;
+            }
+
+            function bumpStat(id) {
+              const el = document.getElementById(id);
+              if (!el) {
+                return;
+              }
+              el.classList.remove("score-pop");
+              void el.offsetWidth;
+              el.classList.add("score-pop");
+            }
+
+            function clearSearch() {
+              const input = document.getElementById("filter-input");
+              if (!input) {
+                return;
+              }
+              input.value = "";
+            }
+
+            function sortPriorityLane() {
+              const list = document.getElementById("priority-lane");
+              if (!list) {
+                return;
+              }
+              const items = Array.from(list.children);
+              if (items.length <= 1) {
+                return;
+              }
+              const firstRects = new Map(items.map(item => [item, item.getBoundingClientRect()]));
+              const sorted = items.slice().sort((a, b) => {
+                const aBtn = a.querySelector("button.bigbut");
+                const bBtn = b.querySelector("button.bigbut");
+                const aLen = aBtn && aBtn.cluster ? aBtn.cluster.length : 0;
+                const bLen = bBtn && bBtn.cluster ? bBtn.cluster.length : 0;
+                if (bLen !== aLen) {
+                  return bLen - aLen;
+                }
+                return items.indexOf(a) - items.indexOf(b);
+              });
+              sorted.forEach(item => list.appendChild(item));
+              sorted.forEach(item => {
+                const first = firstRects.get(item);
+                const last = item.getBoundingClientRect();
+                if (!first) {
+                  return;
+                }
+                const dx = first.left - last.left;
+                const dy = first.top - last.top;
+                if (dx || dy) {
+                  item.animate(
+                    [
+                      { transform: `translate(${dx}px, ${dy}px)` },
+                      { transform: "translate(0, 0)" }
+                    ],
+                    {
+                      duration: 180,
+                      easing: "cubic-bezier(0.2, 0.8, 0.2, 1)"
+                    }
+                  );
+                }
+              });
+            }
+
+            function performMatch(firstbut, secondbut) {
+              if (!firstbut || !secondbut) {
+                return false;
+              }
+              if (!firstbut.category || !secondbut.category) {
+                return false;
+              }
+              if (firstbut.category !== secondbut.category) {
+                return false;
+              }
+              score = score + 1;
+              firstbut.cluster = firstbut.cluster.concat(secondbut.cluster);
+              setButtonLabel(firstbut);
+              firstbut.classList.add("juice-pop");
+              firstbut.addEventListener("animationend", () => {
+                firstbut.classList.remove("juice-pop");
+              }, { once: true });
+                    if (firstbut.cluster.length == 45) {
+                        finishCategory(firstbut);
+                    } else {
+                        moveClusterToPriority(firstbut);
+                        clearSearch();
+                        applyFilter();
+                    }
+              document.getElementById("score").textContent = score;
+              bumpStat("score");
+              removeButton(secondbut);
+              saveState();
+              return true;
+            }
+
+            function shuffleBoard() {
+              const table = document.getElementById("the_table");
+              if (!table) {
+                return;
+              }
+              const cells = [];
+              const buttons = [];
+              for (let i = 0, row; row = table.rows[i]; i++) {
+                for (let j = 0, col; col = row.cells[j]; j++) {
+                  const button = col.firstElementChild;
+                  if (!button) {
+                    continue;
+                  }
+                  cells.push(col);
+                  buttons.push(button);
+                }
+              }
+              if (buttons.length === 0) {
+                return;
+              }
+              shuffleArray(buttons);
+              for (let i = 0; i < cells.length; i++) {
+                cells[i].innerHTML = "";
+                cells[i].appendChild(buttons[i]);
+              }
+              const boardWrapper = document.getElementById("board-wrapper");
+              if (boardWrapper) {
+                boardWrapper.classList.remove("shuffle-flash");
+                void boardWrapper.offsetWidth;
+                boardWrapper.classList.add("shuffle-flash");
+              }
+              applyFilter();
+              saveState();
+            }
+
+            function resetGame() {
+              localStorage.clear();
+              score = 0;
+              mistakes = 0;
+              selected = 0;
+              document.getElementById("score").textContent = score;
+              document.getElementById("mistakes").textContent = mistakes;
+              const input = document.getElementById("filter-input");
+              input.value = "";
+              input.blur();
+              const matchedList = document.getElementById("priority-lane");
+              matchedList.innerHTML = "";
+              const board = document.getElementById("board");
+              board.innerHTML = "";
+              setUpBoard();
+              putWordsInBoard();
+              saveState();
+              applyFilter();
+              const boardWrapper = document.getElementById("board-wrapper");
+              if (boardWrapper) {
+                boardWrapper.classList.remove("shuffle-flash");
+                void boardWrapper.offsetWidth;
+                boardWrapper.classList.add("shuffle-flash");
+              }
+            }
+
+            function showResetIndicator(state) {
+              const indicator = document.getElementById("reset-indicator");
+              const label = document.getElementById("reset-label");
+              if (!indicator) {
+                return;
+              }
+              if (label) {
+                if (state === "done") {
+                  label.textContent = "Reset complete!";
+                } else if (state === "hold") {
+                  label.textContent = "Hold R to reset";
+                } else {
+                  label.textContent = "Hold R to reset";
+                }
+              }
+              indicator.classList.toggle("active", state === "hold" || state === "done");
+              indicator.classList.toggle("holding", state === "hold");
+              indicator.classList.toggle("done", state === "done");
+              if (state === "done") {
+                setTimeout(() => {
+                  indicator.classList.remove("active", "holding", "done");
+                }, 700);
+              }
+              if (state === "cancel") {
+                indicator.classList.remove("active", "holding", "done");
+              }
+            }
+
+            function shouldIgnoreHotkeys(target) {
+              if (!target) {
+                return false;
+              }
+              return target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable;
             }
             
             function stringToLightColor(str) {
@@ -269,9 +1095,12 @@ width:100%; height:100%; display:block;
             }
             
             function finishCategory(b) {
-              b.innerHTML  =  '<b>' + b.category + '</b>';
               b.disabled = true;
-              b.style.background= stringToLightColor(b.category);
+              b.classList.add("completed");
+              b.style.background = stringToLightColor(b.category);
+              moveClusterToPriority(b);
+              clearSearch();
+              applyFilter();
             }
             
             function checkCategories() {
@@ -303,8 +1132,17 @@ width:100%; height:100%; display:block;
             function saveState() {
                 localStorage.clear();
                 
+                localStorage.setItem('hasState', '1');
                 localStorage.setItem('score', score + '');
                 localStorage.setItem('mistakes', mistakes + '');
+                const panelButtons = Array.from(document.querySelectorAll("#priority-lane button.bigbut"));
+                const panelClusters = panelButtons
+                  .filter(button => button && button.category && button.cluster)
+                  .map(button => ({
+                    category: button.category,
+                    cluster: button.cluster
+                  }));
+                localStorage.setItem('panelClusters', JSON.stringify(panelClusters));
                 
                 var t = document.getElementById('the_table');
                 for (let i = 0; i < t.rows.length; i++) {
@@ -312,6 +1150,9 @@ width:100%; height:100%; display:block;
                   for (let j = 0; j < row.cells.length; j++) {
                     let cell = row.cells[j];
                     let button = cell.firstChild;
+                    if (!button || !button.category || !button.cluster) {
+                      continue;
+                    }
                     localStorage.setItem(`${i}_${j}_category`, button.category);
                     localStorage.setItem(`${i}_${j}_cluster`, JSON.stringify(button.cluster));
                     localStorage.setItem(`${i}_${j}_innerHTML`, button.innerHTML);
@@ -323,6 +1164,7 @@ width:100%; height:100%; display:block;
             
             function putWordsInBoard() {
               shuffleArray(wordlist);
+              document.getElementById("priority-lane").innerHTML = "";
               var currentWordIndex = 0;
               var table = document.getElementById("the_table");
               for (let i = 0, row; row = table.rows[i]; i++) {
@@ -332,8 +1174,46 @@ width:100%; height:100%; display:block;
                   button.textContent = wordlist[currentWordIndex][0];
                   button.category = wordlist[currentWordIndex][1];
                   button.cluster = [button.textContent];
+                  setButtonLabel(button);
                   currentWordIndex += 1;
                 }
+              }
+              applyFilter();
+            }
+
+            function applyFilter() {
+              const input = document.getElementById("filter-input");
+              const query = input.value.trim().toLowerCase();
+              const table = document.getElementById("the_table");
+              if (table) {
+                for (let i = 0, row; row = table.rows[i]; i++) {
+                  for (let j = 0, col; col = row.cells[j]; j++) {
+                    const button = col.firstElementChild;
+                    if (!button || button.textContent === "") {
+                      col.classList.remove("is-hidden");
+                      continue;
+                    }
+                    if (query === "") {
+                      col.classList.remove("is-hidden");
+                      continue;
+                    }
+                    const hay = button.dataset.search || "";
+                    col.classList.toggle("is-hidden", !hay.includes(query));
+                  }
+                }
+              }
+
+              const priorityLane = document.getElementById("priority-lane");
+              if (priorityLane) {
+                const items = priorityLane.querySelectorAll(".cluster-item");
+                items.forEach(item => {
+                  if (query === "") {
+                    item.classList.remove("is-hidden");
+                    return;
+                  }
+                  const hay = item.dataset.search || "";
+                  item.classList.toggle("is-hidden", !hay.includes(query));
+                });
               }
             }
             
@@ -467,90 +1347,10 @@ width:100%; height:100%; display:block;
                 tr.classList.add('.row');
                 for (let j = 0; j < M; j++) {
                    const td = document.createElement('td');
-                   td.class = "bigbut";
+                   td.className = "tile-cell";
                    const button = document.createElement('button');
-                   button.class = "bigbut"
-                   button.onclick = function() {
-                       if (selected == button) {
-                         deselect();
-                         return;
-                       }
-                       button.style = "filter: invert(100%)";
-                       
-                       if (selected == 0) {
-                           selected = button;
-                           document.getElementById("deselect").disabled = false;
-                           return;
-                       }
-                       
-                       document.getElementById("deselect").disabled = true;
-
-                       if (button.category == selected.category) {
-                         
-                         firstbut = button;
-                         secondbut = selected;
-                         
-                         // Deselect
-                         selected.style = "";
-                         button.style = "";
-                         selected = 0;
-                         score = score + 1;
-                         
-                         // Merge
-                         firstbut.cluster = firstbut.cluster.concat(secondbut.cluster);
-                         // console.log(firstbut.cluster);
-                         if (firstbut.cluster.length == 2) {
-                           firstbut.innerHTML = '<b>' + firstbut.cluster.join('; ') + '</b>';
-                         } else {
-                           firstbut.innerHTML = '<b>' + firstbut.cluster.slice(0, 2).join(', ') + ', ... <span class="red">[' + firstbut.cluster.length + ']</span></b>';
-                           firstbut.title = firstbut.cluster.join('\n');
-                         }
-                         if (firstbut.cluster.length == 45) {
-                             finishCategory(firstbut);
-                         }
-                         
-                         document.getElementById("score").textContent = score;
-                         // Remove the button for the eliminated word.
-                         secondbut.title = '';
-                         // if (currentWordIndex < wordlist.length) {
-                         //  secondbut.textContent = wordlist[currentWordIndex][0];
-                         //  secondbut.category = wordlist[currentWordIndex][1];
-                         // secondbut.cluster = [secondbut.textContent];
-                         //  currentWordIndex += 1;
-                         // } else {
-                             secondbut.textContent = '';
-                             secondbut.disabled = true;
-                             
-                             // Remove not just the button but the entire <td>.
-                             secondbut.parentElement.remove();
-                        // }
-                         
-                       } else {
-                         mistakes = mistakes + 1;
-                         document.getElementById("mistakes").textContent = mistakes;
-                         // Shake it
-                         button.classList.add('shake');
-                         selected.classList.add('shake');
-                         
-                         button.addEventListener('animationend', () => {
-                           button.classList.remove('shake');
-                           button.style = "";
-                         }, { once: true });
-  
-                         old_selected = selected;
-                         old_selected.addEventListener('animationend', () => {
-                           old_selected.classList.remove('shake');
-                           old_selected.style = "";
-                         }, { once: true });
-  
-                         selected = 0;
-                       }
-                       saveState();
-                       if (score == 1980) {
-                           window.alert("You win!!");
-                           startFireworks();
-                       }
-                   };
+                   button.className = "bigbut";
+                   wireButton(button);
                    td.appendChild(button);
                    tr.appendChild(td);
                 }
@@ -561,51 +1361,125 @@ width:100%; height:100%; display:block;
             }
             
             function loadState() {
-                s = localStorage.getItem('score');
-                if (s == null) {
+                const hasState = localStorage.getItem('hasState');
+                if (!hasState) {
                     putWordsInBoard();
                     return;
                 }
-                score = Number(s);
+                score = Number(localStorage.getItem('score') || 0);
                 document.getElementById("score").textContent = score;
                 
-                s = localStorage.getItem('mistakes');
-                if (s == null) {
-                    putWordsInBoard();
-                    return;
-                }
-                mistakes = Number(s);
+                mistakes = Number(localStorage.getItem('mistakes') || 0);
                 document.getElementById("mistakes").textContent = mistakes;
                 
-                var currentWordIndex = 0;
+              const matchedList = document.getElementById("priority-lane");
+              matchedList.innerHTML = "";
+              const storedPanel = localStorage.getItem("panelClusters");
+              if (storedPanel) {
+                  try {
+                      const parsed = JSON.parse(storedPanel) || [];
+                      parsed.forEach(block => {
+                          if (!block || !block.category || !Array.isArray(block.cluster)) {
+                                return;
+                            }
+                            const button = createClusterButton(block.category, block.cluster);
+                            if (block.cluster.length == 45) {
+                                button.disabled = true;
+                                button.classList.add("completed");
+                                button.style.background = stringToLightColor(block.category);
+                            }
+                            const wrapper = document.createElement("div");
+                            wrapper.className = "cluster-item";
+                            wrapper.appendChild(button);
+                            matchedList.appendChild(wrapper);
+                            updateButtonSearch(button);
+                        });
+                  } catch (e) {
+                      matchedList.innerHTML = "";
+                  }
+              }
+
                 var table = document.getElementById("the_table");
                 var cells_to_remove = [];
+                var panel_moves = [];
                 for (let i = 0, row; row = table.rows[i]; i++) {
                   for (let j = 0, col; col = row.cells[j]; j++) {
                     var button = col.firstElementChild;
                     // button.pos = currentWordIndex;
-                    button.category = localStorage.getItem(`${i}_${j}_category`);
-                    button.cluster = JSON.parse(localStorage.getItem(`${i}_${j}_cluster`));
-                    if (Array.isArray(button.cluster) && button.cluster.length == 45) {
-                        finishCategory(button);
-                    }
-                    button.innerHTML = localStorage.getItem(`${i}_${j}_innerHTML`);
-                    button.title = localStorage.getItem(`${i}_${j}_title`);
-                    currentWordIndex += 1;
-                    if (button.innerHTML == '') {
-                        // No word here, remove the whole <td>
+                    const storedCluster = localStorage.getItem(`${i}_${j}_cluster`);
+                    if (storedCluster == null) {
                         cells_to_remove.push(col);
+                        continue;
+                    }
+                    button.category = localStorage.getItem(`${i}_${j}_category`);
+                    button.cluster = JSON.parse(storedCluster);
+                    if (!button.category || !Array.isArray(button.cluster)) {
+                        cells_to_remove.push(col);
+                        continue;
+                    }
+                    setButtonLabel(button);
+                    if (button.cluster.length > 1) {
+                        panel_moves.push(button);
                     }
                   }
                 }
                 for (let i = 0; i < cells_to_remove.length; i++) {
                     cells_to_remove[i].remove();
                 }
+                for (let i = 0; i < panel_moves.length; i++) {
+                    moveClusterToPriority(panel_moves[i]);
+                }
+                sortPriorityLane();
             }
             
             checkCategories();
             setUpBoard();
             loadState();
+            document.getElementById("filter-input").addEventListener("input", applyFilter);
+            applyFilter();
+            document.addEventListener("keydown", (event) => {
+              if (event.key === "Escape") {
+                const input = document.getElementById("filter-input");
+                input.value = "";
+                input.blur();
+                applyFilter();
+                return;
+              }
+              if (shouldIgnoreHotkeys(event.target)) {
+                return;
+              }
+              if (event.key === "/") {
+                event.preventDefault();
+                const input = document.getElementById("filter-input");
+                input.focus();
+                input.select();
+                return;
+              }
+              if (event.key === "s" || event.key === "S") {
+                shuffleBoard();
+                return;
+              }
+              if (event.key === "r" || event.key === "R") {
+                if (resetHoldTimer || event.repeat) {
+                  return;
+                }
+                showResetIndicator("hold");
+                resetHoldTimer = setTimeout(() => {
+                  resetHoldTimer = null;
+                  resetGame();
+                  showResetIndicator("done");
+                }, 1000);
+              }
+            });
+            document.addEventListener("keyup", (event) => {
+              if (event.key === "r" || event.key === "R") {
+                if (resetHoldTimer) {
+                  clearTimeout(resetHoldTimer);
+                  resetHoldTimer = null;
+                  showResetIndicator("cancel");
+                }
+              }
+            });
         </script>
 
 </html>
